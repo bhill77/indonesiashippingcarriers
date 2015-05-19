@@ -160,7 +160,7 @@ function playAjaxShipping(CURRENT_CITY_ID,PROV_ID)
 	//var CURRENT_CITY_ID = 
 	jQuery.ajax({
 				type: 'GET', 
-				url: '<?php echo $this->getUrl('aongkir/index/city/')?>', 
+				url: '<?php echo Mage::getUrl('aongkir/index/city/', array('_secure'=>true));?>', 
 				data: 'prov_id='+PROV_ID,
 				dataType: 'json',
 				success: function(data){

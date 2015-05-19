@@ -57,18 +57,29 @@ class Ansyori_Aongkir_Model_Carrier_Ongkir
 			$origin = $this->getOriginId();
 			$dest = $this->getCityId();
 			$weight = $this->getBeratTotal();
+			
 			$carriers = $this->getActiveCarriers();
 			
 			$rate_list = array();
 			//getRates($origin,$dest,$weight,$kurir)
 			foreach($carriers as $kurir)
 			{
-				$rates_by_kurir = $this->helper()->getRates($origin,$dest,$weight,$kurir);
+				if($weight > 29){
+					$rates_by_kurir = $this->helper()->getRates($origin,$dest,1,$kurir);
+				}else{
+					$rates_by_kurir = $this->helper()->getRates($origin,$dest,$weight,$kurir);
+				};
 				foreach($rates_by_kurir as $final_list)
 				{
+					if($weight > 29):
+						$ship_cost = $this->changePrice($final_list['cost']) * $weight;
+					else:
+						$ship_cost = $this->changePrice($final_list['cost']);
+					endif;
+					
 					$rate_list[] = array(
-						'text' => $final_list['text'],
-						'cost' => $final_list['cost'],
+						'text' => $final_list['text'] . "($weight Kg)",
+						'cost' => $ship_cost
 						
 					);
 				}
@@ -83,6 +94,81 @@ class Ansyori_Aongkir_Model_Carrier_Ongkir
 			return explode(',',strtolower($this->helper()->config('kurir')));
 		}
 		
+		
+		public function changePrice($price)
+		{
+			$set = $this->helper()->config('changeprice');
+			
+			if(!$set):
+				return $price;
+			
+			else:
+			/*if (strpos($a,'are') !== false) {
+				echo 'true';
+			}*/
+			
+			$found_persen = false;
+			
+			if (strpos($set,'%') !== false) {
+				//echo 'true';
+				
+				$found_persen = true;
+				
+				$set = str_replace('%','',$set);
+			};
+			
+			$found_minus = false;
+			
+			if (strpos($set,'-') !== false) {
+				//echo 'true';
+				
+				$found_minus = true;
+				$set = str_replace('-','',$set);
+				
+			};
+			
+			$found_plus = false;
+			
+			if (strpos($set,'+') !== false) {
+				//echo 'true';
+				
+				$found_plus = true;
+				$set = str_replace('+','',$set);
+				
+			};
+			
+			$final_set = $set ;
+			$changed_price = 0;
+			if($found_persen)
+			{
+				$changed_price = ($price * $set) / 100;
+			}else
+			{
+				$changed_price = abs($set);
+			};
+			
+			if($found_minus)
+			{
+				return $price - $changed_price;
+			};
+			
+			if($found_plus)
+			{
+				return $price + $changed_price;
+			};
+			
+			
+			
+			
+			
+			//$final_price
+			
+			
+			
+				return $price; 
+			endif;
+		}
+		
 		public function getOriginId()
 		{
 			return $this->helper()->config('origin');
@@ -95,6 +181,10 @@ class Ansyori_Aongkir_Model_Carrier_Ongkir
 			foreach($items as $item) {
 				$totalWeight += ($item->getWeight() * $item->getQty()) ;
 			}
+			
+			if($totalWeight < 1)
+			$totalWeight = 1;
+			
 			
 			return $totalWeight;
 		}
